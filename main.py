@@ -26,9 +26,11 @@ def testRooks():
 def runGame(board):
     currentPlayer = None
     victory = None
-    while victory is None:
+    while True:
         currentPlayer = Player.BLACK if currentPlayer == Player.WHITE else Player.WHITE
         victory = victoryCheck(board, currentPlayer)
+        if victory is not None:
+            break
         takeTurn(board, currentPlayer)
     print("Winner: {}!".format(showPlayer(victory)))
 

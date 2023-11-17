@@ -17,6 +17,6 @@ class Space:
 
     def render(self):
         if self.piece is None:
-            return "  "
+            return "    "
         else:
             return self.piece.render()

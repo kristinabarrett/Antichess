@@ -10,10 +10,7 @@ class Piece:
     identity = None
 
     def render(self):
-        return ("B" if self.player == Player.BLACK else "W") + self.renderName()
-
-    def renderName(self) -> str:
-        pass
+        return (" B" if self.player == Player.BLACK else " W") + self.renderName() + " "
 
 
 class PieceIdentity(Enum):

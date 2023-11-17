@@ -6,6 +6,9 @@ class Bishop(Piece):
         self.player = player
         self.identity = PieceIdentity.BISHOP
 
+    def renderName(self):
+        return "B"
+
     def isMoveValid(self, initialX, initialY, finalX, finalY):
         deltaX = finalX - initialX
         deltaY = finalY - initialY

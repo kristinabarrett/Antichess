@@ -85,7 +85,8 @@ class Board:
 
             for currentSpace in currentPlayerSpaces:
                 for enemySpace in enemyPlayerSpaces:
-                    (result, reason) = self.canMovePiece(currentPlayer, currentSpace.getCoords(), enemySpace.getCoords())
+                    (result, reason) = self.canMovePiece(currentPlayer, currentSpace.getCoords(),
+                                                         enemySpace.getCoords())
                     if result:
                         self.possibleCaptureCoords.append((currentSpace.getCoords(), enemySpace.getCoords()))
         return self.possibleCaptureCoords
@@ -95,13 +96,15 @@ class Board:
         (result, reason) = self.canMovePiece(currentPlayer, initialCoord, finalCoord)
         if len(self.checkForCaptures(currentPlayer)) > 0:
             captureCheck = False
-            for coords in self.checkForCaptures(currentPlayer):
+            caps = self.checkForCaptures(currentPlayer)
+            for coords in caps:
                 if coords[0] == initialCoord and coords[1] == finalCoord:
                     captureCheck = True
                     break
             if not captureCheck:
                 result = False
-                reason = "Possible Capture available"
+                capString = Board.showCaptures(caps)
+                reason = "Possible capture(s) available: " + capString
 
         if result:
             initialSpace = self.getSpace(initialCoord)
@@ -116,6 +119,12 @@ class Board:
     def canMovePiece(self, currentPlayer, initialCoord, finalCoord):
         """Parameters will be tuples of x,y coordinates. Returns bool indicating legality of move"""
 
+        if initialCoord is None or len(initialCoord) != 2 or not isinstance(initialCoord[0], int) or not isinstance(
+                initialCoord[1], int):
+            return False, "Initial space is invalid"
+        if finalCoord is None or len(finalCoord) != 2 or not isinstance(finalCoord[0], int) or not isinstance(
+                finalCoord[1], int):
+            return False, "Final space is invalid"
         if Board.checkOutOfBounds(initialCoord):
             return False, "Initial space is out of bounds"
         if Board.checkOutOfBounds(finalCoord):
@@ -136,13 +145,17 @@ class Board:
             return False, "Another piece is in the way"
         if destinationType == SPACE_FRIEND:
             return False, "You can't capture your own piece"
-        if piece.identity == PieceIdentity.PAWN and not isACapture and Pawn.isDiagonal(initialCoord[0], initialCoord[1], finalCoord[0], finalCoord[1]):
-            return False, "Pawns can only move diagonally for captures"
+        if piece.identity == PieceIdentity.PAWN:
+            diagonal = Pawn.isDiagonal(initialCoord[0], initialCoord[1], finalCoord[0], finalCoord[1])
+            if (isACapture and not diagonal) or (not isACapture and diagonal):
+                return False, "Pawns can only move diagonally for captures"
         return True, "Move is valid"
 
     @staticmethod
     def checkOutOfBounds(coord):
         """Parameter will be tuple of x,y coordinates. Returns False if move is on the board, True if not"""
+        if coord is None or len(coord) != 2:
+            return True
         if coord[0] < 0 or coord[0] > 7:
             return True
         if coord[1] < 0 or coord[1] > 7:
@@ -162,8 +175,8 @@ class Board:
         directionY = -1 if initialY > finalY else 1
 
         # Lists of space indices between initial and final destinations
-        xCoords = range(initialX, finalX - directionX, directionX)
-        yCoords = range(initialY, finalY - directionY, directionY)
+        xCoords = range(initialX, finalX, directionX)
+        yCoords = range(initialY, finalY, directionY)
 
         # Check if either list is empty. If so, fill with initial/final value (they will be the same).
         if len(xCoords) == 0:
@@ -178,6 +191,8 @@ class Board:
         # Walk from the starting x to the ending x.
         for index, curX in enumerate(xCoords):
             curY = yCoords[index]
+            if curX == initialX and curY == initialY:
+                continue
             curSpace = self.getSpace((curX, curY))
             if curSpace.piece is not None:
                 return True
@@ -188,20 +203,82 @@ class Board:
         target = self.getSpace(coord)
         if target.piece is None:
             return SPACE_EMPTY
-        if target.piece.player != currentPlayer:
-            return SPACE_ENEMY
         if target.piece.player == currentPlayer:
             return SPACE_FRIEND
+        if target.piece.player != currentPlayer:
+            return SPACE_ENEMY
 
     def getSpace(self, coord) -> Space:
         """Returns a space object from the specified tuple"""
         return self.spaces[coord[0]][coord[1]]
 
+    @staticmethod
+    def toChar(n: int):
+        """Returns none if n is out of bounds"""
+        return "hgfedcba"[n].capitalize() if n in range(8) else None
+
+    @staticmethod
+    def fromChar(c: str):
+        """Returns none if c out of bounds"""
+        if len(c) > 1:
+            return None
+        f = "hgfedcba".find(c.lower())
+        return f if f != -1 else None
+
+    @staticmethod
+    def coordsFromRowCol(rowCol: str):
+        """
+        A rowCol is a string, example: "A3". Returns a tuple of 0-indexed (x,y) coords.
+        If either is a bad input, the whole result is None
+        """
+        try:
+            if len(rowCol) < 2:
+                return None
+            y = Board.fromChar(rowCol[0])
+            x = int(rowCol[1]) - 1
+            return (x, y) if x is not None and int(y) in range(8) else None
+        except:
+            return None
+
+    @staticmethod
+    def rowColFromCoords(coords):
+        """
+        Inverse of coordsFromRowCol
+        If either is a bad input, the whole result is None
+        """
+        try:
+            if len(coords) < 2:
+                return None
+            y = Board.toChar(coords[1])
+            x = str(coords[0] + 1)
+            return "{}{}".format(y, x) if y is not None and coords[0] in range(8) else None
+        except:
+            return None
+
+    @staticmethod
+    def showCaptures(caps):
+        """Returns a string formatted to display the given list of captures (as from checkForCaptures())"""
+        return ", ".join("({} -> {})".format(Board.rowColFromCoords(c[0]), Board.rowColFromCoords(c[1])) for c in caps)
+
     def render(self):
-        res = ""
-        for xColumn in self.spaces:
-            res += "+--"
-            for space in xColumn:
-                res += "|" + space.render() + "|"
-            res += "\n"
+        res = " "
+
+        for x in range(8):
+            res += "   " + str(x + 1) + " "
+        res += "\n"
+        for x in range(8):
+
+            res += "  "
+            for y in range(8):
+                res += "┼────"
+            res += "┼\n" + Board.toChar(x) + " "
+            for y in range(8):
+                space = self.spaces[y][x]  # Render by row,column
+                res += "│" + space.render()
+            res += "│\n"
+
+        res += "  "
+        for y in range(8):
+            res += "┴────"
+        res += "┴\n  "
         return res

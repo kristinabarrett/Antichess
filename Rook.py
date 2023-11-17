@@ -6,6 +6,9 @@ class Rook(Piece):
         self.player = player
         self.identity = PieceIdentity.ROOK
 
+    def renderName(self):
+        return "R"
+
     def isMoveValid(self, initialX, initialY, finalX, finalY):
 
         # Check for zero movement

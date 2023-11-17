@@ -6,6 +6,9 @@ class Queen(Piece):
         self.player = player
         self.identity = PieceIdentity.QUEEN
 
+    def renderName(self):
+        return "Q"
+
     def isMoveValid(self, initialX, initialY, finalX, finalY):
         deltaX = finalX - initialX
         deltaY = finalY - initialY

@@ -10,6 +10,9 @@ class Pawn(Piece):
         self.player = player
         self.identity = PieceIdentity.PAWN
 
+    def renderName(self):
+        return "P"
+
     def isMoveValid(self, initialX, initialY, finalX, finalY):
         deltaX = finalX - initialX
         deltaY = finalY - initialY

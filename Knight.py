@@ -6,6 +6,9 @@ class Knight(Piece):
         self.player = player
         self.identity = PieceIdentity.KNIGHT
 
+    def renderName(self):
+        return "H"
+
     def isMoveValid(self, initialX, initialY, finalX, finalY):
         deltaX = finalX - initialX
         deltaY = finalY - initialY
